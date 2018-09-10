@@ -1,4 +1,5 @@
-﻿using Microsoft.Azure.Documents;
+﻿using CosmosDBConnection.Constants;
+using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.Documents.Linq;
 using Newtonsoft.Json;
@@ -24,8 +25,8 @@ namespace CosmosDBConnection.CosmosDB
 
 		private static Lazy<DocumentClient> lazyDBClient = new Lazy<DocumentClient>(() =>
 		{
-			Uri endpoint = new Uri(Environment.GetEnvironmentVariable("RAVENDB_URI"));
-			string authKey = Environment.GetEnvironmentVariable("RAVENDB_PKEY");
+			Uri endpoint = new Uri(Environment.GetEnvironmentVariable( Config.COSMOS_URI));
+			string authKey = Environment.GetEnvironmentVariable(Config.COSMOS_KEY);
 			return new DocumentClient(endpoint, authKey);
 		});
 		private static DocumentClient CosmosDBClient => lazyDBClient.Value;
