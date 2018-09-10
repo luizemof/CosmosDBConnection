@@ -10,6 +10,14 @@ using System.Threading.Tasks;
 
 namespace CosmosDBConnection.CosmosDB
 {
+	internal struct CosmoOperation
+	{
+		public string Database;
+		public string Collection;
+		public string Payload;
+		public dynamic Results;
+	}
+
 	internal static partial class CosmosDBOperations
 	{
 		#region Lazy Client
@@ -22,14 +30,6 @@ namespace CosmosDBConnection.CosmosDB
 		});
 		private static DocumentClient CosmosDBClient => lazyDBClient.Value;
 		#endregion
-
-		public struct CosmoOperation
-		{
-			public string Database;
-			public string Collection;
-			public string Payload;
-			public dynamic Results;
-		}
 
 		public static async Task<CosmoOperation> QueryDBAsync(CosmoOperation OperationInfo)
 		{

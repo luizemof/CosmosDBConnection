@@ -7,3 +7,4 @@
 *.ide
 *.ide-shm
 *.ide-wal
+*.dtbcache
