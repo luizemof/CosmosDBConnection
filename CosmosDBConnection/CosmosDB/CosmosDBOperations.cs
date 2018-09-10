@@ -74,7 +74,7 @@ namespace CosmosDBConnection.CosmosDB
 			{
 				string db = OperationInfo.Database;
 				string col = OperationInfo.Collection;
-				var document = JsonConvert.DeserializeObject(OperationInfo.Payload);
+				Dictionary<string, object> document = JsonConvert.DeserializeObject<Dictionary<string, object>>(OperationInfo.Payload);
 
 				OperationInfo.Results = await CosmosDBClient.UpsertDocumentAsync(UriFactory.CreateDocumentCollectionUri(db, col), document);
 				OperationInfo.Results = ((ResourceResponse<Document>)OperationInfo.Results).Resource;

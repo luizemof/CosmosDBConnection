@@ -7,6 +7,9 @@ using Newtonsoft.Json;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using CosmosDBConnection.Constants;
+using System;
 
 namespace CosmosDBConnection.Functions
 {
@@ -15,18 +18,28 @@ namespace CosmosDBConnection.Functions
 		[FunctionName("PersistData")]
 		public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)]HttpRequestMessage req, TraceWriter log)
 		{
-			log.Info("C# HTTP trigger function processed a request.");
-			string json = await req.Content.ReadAsStringAsync();
-			PersistInfo persistData = JsonConvert.DeserializeObject<PersistInfo>(json);
-			CosmoOperation cosmoOperation = await CosmosDBOperations.UpsertDocumentAsync(new CosmoOperation()
+			try
 			{
-				Collection = string.Empty,
-				Database = string.Empty,
-				Payload = string.Empty,
-				Results = null
-			});
+				log.Info("PersistData message received");
+				string json = await req.Content.ReadAsStringAsync();
 
-			return await Task.Factory.StartNew(() => req.CreateResponse(HttpStatusCode.OK, "PersistData OK"));
+				if (string.IsNullOrWhiteSpace(json))
+					throw new Exception("Missing body");
+
+				CosmoOperation cosmoOperation = await CosmosDBOperations.UpsertDocumentAsync(new CosmoOperation()
+				{
+					Collection = Environment.GetEnvironmentVariable(Config.COSMOS_COLLECTION),
+					Database = Environment.GetEnvironmentVariable(Config.COSMOS_DATABASE),
+					Payload = json,
+				});
+
+				return req.CreateResponse(HttpStatusCode.OK, cosmoOperation.Results as object);
+			}
+			catch (Exception ex)
+			{
+				log.Error("Error: ", ex);
+				return req.CreateResponse(HttpStatusCode.BadRequest, ex.Message);
+			}
 		}
 	}
 }
