@@ -8,30 +8,28 @@ using CosmosDBConnection.CosmosDB;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
-using Newtonsoft.Json;
 
 namespace CosmosDBConnection.Functions
 {
-	public static class GetIntentAnswer
+	public static class GetDocuments
 	{
-		[FunctionName("GetIntentAnswer")]
+		[FunctionName("GetDocuments")]
 		public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)]HttpRequestMessage req, TraceWriter log)
 		{
-			log.Info("GetIntentAnswer message received");
+			log.Info("GetDocuments requested");
+
 			try
 			{
-				string intentName = req.GetQueryNameValuePairs()
-					.FirstOrDefault(q => string.Compare(q.Key, "intent", true) == 0)
+				string type = req.GetQueryNameValuePairs()
+					.FirstOrDefault(q => string.Compare(q.Key, "type", true) == 0)
 					.Value;
 
-				if (string.IsNullOrWhiteSpace(intentName))
-					throw new Exception("Missing intentName data");
-
+				string whereClause = !string.IsNullOrWhiteSpace(type) ? $"WHERE c.type = '{type}'" : string.Empty;
 				CosmoOperation cosmoOperation = await CosmosDBOperations.QueryDBAsync(new CosmoOperation()
 				{
 					Collection = Environment.GetEnvironmentVariable(Config.COSMOS_COLLECTION),
 					Database = Environment.GetEnvironmentVariable(Config.COSMOS_DATABASE),
-					Payload = $"SELECT * FROM c WHERE c.type = 'IntentContent'  AND ARRAY_CONTAINS(c.intents, '{intentName}')"
+					Payload = $"SELECT * FROM c {whereClause}"
 				});
 
 				return req.CreateResponse(HttpStatusCode.OK, cosmoOperation.Results as object);
