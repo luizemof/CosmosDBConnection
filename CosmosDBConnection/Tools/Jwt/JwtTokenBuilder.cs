@@ -6,26 +6,20 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CosmosDBConnection.Tools
+namespace CosmosDBConnection.Tools.Jwt
 {
 	internal class JwtTokenBuilder
 	{
-		private SecurityKey securityKey = null;
 		private string subject = "";
 		private string issuer = "";
 		private string audience = "";
 		private string nameId = "";
 		private Dictionary<string, string> claims = new Dictionary<string, string>();
 		private int expiryInMinutes = 5;
-
-		public JwtTokenBuilder AddSecurityKey(SecurityKey securityKey)
-		{
-			this.securityKey = securityKey;
-			return this;
-		}
 
 		public JwtTokenBuilder AddSubject(string subject)
 		{
@@ -72,7 +66,7 @@ namespace CosmosDBConnection.Tools
 
 		public string Build()
 		{
-			var claims = new List<Claim>
+			IEnumerable<Claim> claims = new List<Claim>
 			{
 			  new Claim(JwtRegisteredClaimNames.Sub, subject),
 			  new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
@@ -85,19 +79,15 @@ namespace CosmosDBConnection.Tools
 							  audience: this.audience,
 							  claims: claims,
 							  expires: DateTime.UtcNow.AddMinutes(expiryInMinutes),
-							  signingCredentials: new SigningCredentials(
-														this.securityKey,
-														SecurityAlgorithms.Sha512));
+							  signingCredentials: JwtConstants.SigningConfigurations.SigningCredentials);
 
 			return new JwtSecurityTokenHandler().WriteToken(token);
 		}
-
 	}
 
 	internal static class JwtSecurityKey
 	{
-		public static SymmetricSecurityKey Create(string secret) =>
-			new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
+		public static SymmetricSecurityKey Create(string secret) => new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
 
 	}
 
@@ -110,7 +100,7 @@ namespace CosmosDBConnection.Tools
 			{
 				ValidIssuer = Environment.GetEnvironmentVariable(Config.TOKEN_ISSUE),
 				ValidAudiences = new[] { Environment.GetEnvironmentVariable(Config.TOKEN_ISSUE) },
-				IssuerSigningKey = JwtSecurityKey.Create(Environment.GetEnvironmentVariable(Config.TOKEN_KEY))
+				IssuerSigningKey = JwtConstants.SigningConfigurations.Key
 			};
 			var _user = new JwtSecurityTokenHandler().ValidateToken(token, validationParameters, out SecurityToken validatedToken);
 

@@ -1,6 +1,6 @@
 using CosmosDBConnection.Constants;
 using CosmosDBConnection.CosmosDB;
-using CosmosDBConnection.Tools;
+using CosmosDBConnection.Tools.Jwt;
 using CosmosDBConnection.WebAPIContracts;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;

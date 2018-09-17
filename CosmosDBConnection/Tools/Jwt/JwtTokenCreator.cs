@@ -5,14 +5,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace CosmosDBConnection.Tools
+namespace CosmosDBConnection.Tools.Jwt
 {
 	internal static class JwtTokenCreator
 	{
 		internal static string CreateJwtToken(string subject, string nameid, Dictionary<string, string> claims)
 		{
 			string token = new JwtTokenBuilder()
-				.AddSecurityKey(JwtSecurityKey.Create(Environment.GetEnvironmentVariable(Config.TOKEN_KEY)))
 				.AddSubject(subject)
 				.AddIssuer(Environment.GetEnvironmentVariable(Config.TOKEN_ISSUE))
 				.AddAudience(Environment.GetEnvironmentVariable(Config.TOKEN_ISSUE))

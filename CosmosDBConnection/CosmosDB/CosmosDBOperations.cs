@@ -2,11 +2,8 @@
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.Documents.Linq;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace CosmosDBConnection.CosmosDB
@@ -15,7 +12,7 @@ namespace CosmosDBConnection.CosmosDB
 	{
 		public string Database;
 		public string Collection;
-		public string Payload;
+		public object Payload;
 		public dynamic Results;
 	}
 
@@ -42,7 +39,7 @@ namespace CosmosDBConnection.CosmosDB
 				IDocumentQuery<dynamic> query = CosmosDBClient
 					.CreateDocumentQuery(
 						UriFactory.CreateDocumentCollectionUri(OperationInfo.Database, OperationInfo.Collection),
-						OperationInfo.Payload,
+						OperationInfo.Payload.ToString(),
 						new FeedOptions { EnableCrossPartitionQuery = true }
 					).AsDocumentQuery();
 
@@ -74,9 +71,8 @@ namespace CosmosDBConnection.CosmosDB
 			{
 				string db = OperationInfo.Database;
 				string col = OperationInfo.Collection;
-				Dictionary<string, object> document = JsonConvert.DeserializeObject<Dictionary<string, object>>(OperationInfo.Payload);
 
-				OperationInfo.Results = await CosmosDBClient.UpsertDocumentAsync(UriFactory.CreateDocumentCollectionUri(db, col), document);
+				OperationInfo.Results = await CosmosDBClient.UpsertDocumentAsync(UriFactory.CreateDocumentCollectionUri(db, col), OperationInfo.Payload);
 				OperationInfo.Results = ((ResourceResponse<Document>)OperationInfo.Results).Resource;
 			}
 			catch (Exception ex)
