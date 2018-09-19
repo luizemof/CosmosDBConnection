@@ -2,6 +2,7 @@
 using Microsoft.Azure.Documents;
 using Microsoft.Azure.Documents.Client;
 using Microsoft.Azure.Documents.Linq;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -22,35 +23,35 @@ namespace CosmosDBConnection.CosmosDB
 
 		private static Lazy<DocumentClient> lazyDBClient = new Lazy<DocumentClient>(() =>
 		{
-			Uri endpoint = new Uri(Environment.GetEnvironmentVariable( Config.COSMOS_URI));
+			Uri endpoint = new Uri(Environment.GetEnvironmentVariable(Config.COSMOS_URI));
 			string authKey = Environment.GetEnvironmentVariable(Config.COSMOS_KEY);
 			return new DocumentClient(endpoint, authKey);
 		});
 		private static DocumentClient CosmosDBClient => lazyDBClient.Value;
 		#endregion
 
-		public static async Task<CosmoOperation> QueryDBAsync(CosmoOperation OperationInfo)
+		public static async Task<CosmoOperation> QueryDBAsync(CosmoOperation operation)
 		{
 			try
 			{
-				string db = OperationInfo.Database;
-				string col = OperationInfo.Collection;
+				string db = operation.Database;
+				string col = operation.Collection;
 
 				IDocumentQuery<dynamic> query = CosmosDBClient
 					.CreateDocumentQuery(
-						UriFactory.CreateDocumentCollectionUri(OperationInfo.Database, OperationInfo.Collection),
-						OperationInfo.Payload.ToString(),
+						UriFactory.CreateDocumentCollectionUri(operation.Database, operation.Collection),
+						operation.Payload.ToString(),
 						new FeedOptions { EnableCrossPartitionQuery = true }
 					).AsDocumentQuery();
 
-				OperationInfo.Results = await GetAllResultsAsync(query);
+				operation.Results = await GetAllResultsAsync(query);
 			}
 			catch (Exception ex)
 			{
-				OperationInfo.Results = ex;
+				operation.Results = ex;
 			}
 
-			return OperationInfo;
+			return operation;
 		}
 
 		private async static Task<T[]> GetAllResultsAsync<T>(IDocumentQuery<T> queryAll)
@@ -65,22 +66,43 @@ namespace CosmosDBConnection.CosmosDB
 			return list.ToArray();
 		}
 
-		public static async Task<CosmoOperation> UpsertDocumentAsync(CosmoOperation OperationInfo)
+		public static async Task<CosmoOperation> UpsertDocumentAsync(CosmoOperation operation)
 		{
 			try
 			{
-				string db = OperationInfo.Database;
-				string col = OperationInfo.Collection;
+				string db = operation.Database;
+				string col = operation.Collection;
 
-				OperationInfo.Results = await CosmosDBClient.UpsertDocumentAsync(UriFactory.CreateDocumentCollectionUri(db, col), OperationInfo.Payload);
-				OperationInfo.Results = ((ResourceResponse<Document>)OperationInfo.Results).Resource;
+				operation.Results = await CosmosDBClient.UpsertDocumentAsync(UriFactory.CreateDocumentCollectionUri(db, col), operation.Payload);
+				operation.Results = ((ResourceResponse<Document>)operation.Results).Resource;
 			}
 			catch (Exception ex)
 			{
-				OperationInfo.Results = ex;
+				operation.Results = ex;
 			}
 
-			return OperationInfo;
+			return operation;
+		}
+
+		public static async Task<CosmoOperation> DeleteDocumentAsync(CosmoOperation operation)
+		{
+			try
+			{
+				string db = operation.Database;
+				string col = operation.Collection;
+
+				operation.Results = await CosmosDBClient.DeleteDocumentAsync(
+					UriFactory.CreateDocumentUri(db, col, ((dynamic)operation.Payload).id),
+					new RequestOptions() { PartitionKey = new PartitionKey(((dynamic)operation.Payload).partitionKey) });
+
+				operation.Results = ((ResourceResponse<Document>)operation.Results).Resource;
+			}
+			catch (Exception ex)
+			{
+				operation.Results = ex;
+			}
+
+			return operation;
 		}
 	}
 }

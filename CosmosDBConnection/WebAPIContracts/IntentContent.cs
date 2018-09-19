@@ -11,19 +11,25 @@ namespace CosmosDBConnection.WebAPIContracts
 	{
 		public string id { get; set; }
 
-		public List<Intents> intents { get; set; }
+		public string intent { get; set; }
 
-		public Content content { get; set; }
+		public List<IntentEntities> entities { get; set; }
 
 		public string type { get; set; }
 
 		public string partitionKey { get; set; }
 	}
-
-	internal class Intents
+	
+	internal class IntentEntities
 	{
-		public string name { get; set; }
-		public string profile { get; set; }
+		public string value { get; set; }
+		public List<IntentEntitiesProfile> profiles { get; set; }
+	}
+
+	internal class IntentEntitiesProfile
+	{
+		public string id { get; set; }
+		public Content content { get; set; }
 	}
 
 	internal class Content
