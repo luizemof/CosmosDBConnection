@@ -24,14 +24,21 @@ namespace CosmosDBConnection.Functions
 					.FirstOrDefault(q => string.Compare(q.Key, "intent", true) == 0)
 					.Value;
 
-				if (string.IsNullOrWhiteSpace(intentName))
-					throw new Exception("Missing intentName data");
+				string profile = req.GetQueryNameValuePairs()
+					.FirstOrDefault(q => string.Compare(q.Key, "profile", true) == 0)
+					.Value;
+
+				string whereCondition = "WHERE d.type = 'IntentContent'";
+				if(!string.IsNullOrWhiteSpace(intentName))
+					whereCondition = $"{whereCondition} AND c.name = '{intentName}'";
+				if (!string.IsNullOrWhiteSpace(profile))
+					whereCondition = $"{whereCondition} AND c.profile = '{profile}'";
 
 				CosmoOperation cosmoOperation = await CosmosDBOperations.QueryDBAsync(new CosmoOperation()
 				{
 					Collection = Environment.GetEnvironmentVariable(Config.COSMOS_COLLECTION),
 					Database = Environment.GetEnvironmentVariable(Config.COSMOS_DATABASE),
-					Payload = $"SELECT * FROM c WHERE c.type = 'IntentContent'  AND ARRAY_CONTAINS(c.intents, '{intentName}')"
+					Payload = $"SELECT d as document FROM Data d JOIN c IN d.intents {whereCondition}"
 				});
 
 				return req.CreateResponse(HttpStatusCode.OK, cosmoOperation.Results as object);

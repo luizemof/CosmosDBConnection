@@ -17,7 +17,7 @@ namespace CosmosDBConnection.WebAPIContracts
 
 		public string type { get; set; }
 
-		public string PartitionKey { get; set; }
+		public string partitionKey { get; set; }
 	}
 
 	internal class Intents

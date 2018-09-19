@@ -25,7 +25,7 @@ namespace CosmosDBConnection.Functions
 
 			try
 			{
-				Utils.ValidateAuthorizationHeader(req.Headers?.Authorization);
+				//Utils.ValidateAuthorizationHeader(req.Headers?.Authorization);
 
 				string json = await req.Content.ReadAsStringAsync();
 				if (string.IsNullOrWhiteSpace(json))
@@ -38,8 +38,8 @@ namespace CosmosDBConnection.Functions
 					intentContent.id = Guid.NewGuid().ToString();
 
 				log.Info("Creating intentContent Partition key");
-				if (string.IsNullOrWhiteSpace(intentContent.PartitionKey))
-					intentContent.PartitionKey = Utils.CreatePartitionKey(intentContent.type.Replace(" ", ""), intentContent.id);
+				if (string.IsNullOrWhiteSpace(intentContent.partitionKey))
+					intentContent.partitionKey = Utils.CreatePartitionKey(intentContent.type.Replace(" ", ""), intentContent.id);
 
 				CosmoOperation cosmoOperation = await CosmosDBOperations.UpsertDocumentAsync(new CosmoOperation()
 				{
