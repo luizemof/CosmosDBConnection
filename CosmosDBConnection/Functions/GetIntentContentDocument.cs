@@ -12,9 +12,9 @@ using Newtonsoft.Json;
 
 namespace CosmosDBConnection.Functions
 {
-	public static class GetIntentAnswer
+	public static class GetIntentContentDocument
 	{
-		[FunctionName("GetIntentAnswer")]
+		[FunctionName("GetIntentContentDocument")]
 		public static async Task<HttpResponseMessage> Run([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)]HttpRequestMessage req, TraceWriter log)
 		{
 			log.Info("GetIntentAnswer message received");
@@ -28,17 +28,25 @@ namespace CosmosDBConnection.Functions
 					.FirstOrDefault(q => string.Compare(q.Key, "profile", true) == 0)
 					.Value;
 
+				string entity = req.GetQueryNameValuePairs()
+					.FirstOrDefault(q => string.Compare(q.Key, "entity", true) == 0)
+					.Value;
+
 				string whereCondition = "WHERE d.type = 'IntentContent'";
-				if(!string.IsNullOrWhiteSpace(intentName))
-					whereCondition = $"{whereCondition} AND c.name = '{intentName}'";
+				if (!string.IsNullOrWhiteSpace(intentName))
+					whereCondition = $"{whereCondition} AND d.intent = '{intentName}'";
+
+				if (!string.IsNullOrWhiteSpace(entity))
+					whereCondition = $"{whereCondition} AND e['value'] = '{entity}'";
+
 				if (!string.IsNullOrWhiteSpace(profile))
-					whereCondition = $"{whereCondition} AND c.profile = '{profile}'";
+					whereCondition = $"{whereCondition} AND p.id = '{profile}'";
 
 				CosmoOperation cosmoOperation = await CosmosDBOperations.QueryDBAsync(new CosmoOperation()
 				{
 					Collection = Environment.GetEnvironmentVariable(Config.COSMOS_COLLECTION),
 					Database = Environment.GetEnvironmentVariable(Config.COSMOS_DATABASE),
-					Payload = $"SELECT d as document FROM Data d JOIN c IN d.intents {whereCondition}"
+					Payload = $"SELECT d as document FROM Data d JOIN e IN d.entities JOIN p IN e.profiles {whereCondition}"
 				});
 
 				return req.CreateResponse(HttpStatusCode.OK, cosmoOperation.Results as object);
